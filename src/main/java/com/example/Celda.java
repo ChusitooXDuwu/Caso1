@@ -14,13 +14,16 @@ public class Celda extends Thread {
 
     public Celda(Tablero tablero, int fila) {
         this.tablero = tablero;
-        this.estadoActual = Math.random() < 0.5 ? 1 : 0;
-        this.capacidadBuffer = fila + 1;
+        this.estadoActual = Math.random() < 0.5 ? 1 : 0; //aca genera un estado aleatorio 1 - 0 para inicializar una celda
+        this.capacidadBuffer = fila + 1; // calcula la capacidad del buffer basado en la fila
         this.bufferEstados = new LinkedList<>();
     }
 
     public synchronized void agregarVecino(Celda vecino) {
         vecinos.add(vecino);
+        // aca no estoy seguro si realmente anade los vecinos de manera correcta
+        // tal que si sean los vecinos y analise todo, 
+        //TODO  revisar esto
     }
 
     public int getEstadoActual() {
@@ -73,12 +76,15 @@ public class Celda extends Thread {
         int nuevoEstado = (estadoActual == 1 && (vivos == 2 || vivos == 3)) || (estadoActual == 0 && vivos == 3) ? 1 : 0;
         this.estadoActual = nuevoEstado;
         
+        // TODO aca siemrpe me dan todos 0,
+        // tenemos que arregalr para que lea bien los vecinos
     }
     
 
     
     @Override
 public void run() {
+    /// creo q el run esta bien pero igual revisar xd
     try {
         while (!Thread.interrupted()) {
             Thread.sleep(100);
@@ -86,6 +92,7 @@ public void run() {
             calcularProximoEstado();
             tablero.notificarCeldaListo(); // Ajustado para no pasar argumentos
         }
+        
     } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
     }

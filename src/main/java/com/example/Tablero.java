@@ -13,13 +13,13 @@ public class Tablero {
         this.columnas = columnas;
         this.totalTurnos = totalTurnos;
         this.celdas = new Celda[filas][columnas];
-        inicializarCeldas();
+        inicializarCeldas();// inicializa ccada celda del tablero
     }
 
     private void inicializarCeldas() {
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
-                celdas[i][j] = new Celda(this,i);
+                celdas[i][j] = new Celda(this,i); // aca recibe x parametro el tablero y la fila
             }
         }
     }
@@ -31,6 +31,7 @@ public class Tablero {
         if (celdasListasParaSiguienteTurno == filas * columnas) {
             
             celdasListasParaSiguienteTurno = 0;
+            // aca espera para que todas las celdas esten listas para el siguiente turno
             notifyAll(); 
         }
     }
