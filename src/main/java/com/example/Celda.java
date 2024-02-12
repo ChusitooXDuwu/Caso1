@@ -58,14 +58,23 @@ public class Celda extends Thread {
 
     private void calcularProximoEstado() {
         int vivos = 0;
+    
+        // Asumiendo que `leerEstadoDelBuffer` devuelve correctamente los estados de los vecinos.
         synchronized (this) {
             while (!bufferEstados.isEmpty()) {
-                vivos += leerEstadoDelBuffer();
+                int estadoVecino = leerEstadoDelBuffer(); // Este método debería hacer poll() del buffer
+                if(estadoVecino == 1) {
+                    vivos++; // Solo incrementa si el vecino está vivo
+                }
             }
         }
+    
+        // Decide el nuevo estado basado en las reglas del Juego de la Vida
         int nuevoEstado = (estadoActual == 1 && (vivos == 2 || vivos == 3)) || (estadoActual == 0 && vivos == 3) ? 1 : 0;
         this.estadoActual = nuevoEstado;
+        
     }
+    
 
     
     @Override
