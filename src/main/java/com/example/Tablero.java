@@ -19,11 +19,12 @@ public class Tablero {
     private void inicializarCeldas() {
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j < columnas; j++) {
-                celdas[i][j] = new Celda(this);
-                
+                celdas[i][j] = new Celda(this,i);
             }
         }
     }
+
+    
     
     public synchronized void notificarCeldaListo() {
         celdasListasParaSiguienteTurno++;

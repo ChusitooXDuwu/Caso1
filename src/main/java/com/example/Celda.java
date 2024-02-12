@@ -1,46 +1,85 @@
 package com.example;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class Celda extends Thread {
-    private volatile int estadoActual; 
+    private volatile int estadoActual;
     private final List<Celda> vecinos = new ArrayList<>();
-    private final Tablero tablero; 
-    
-    public Celda(Tablero tablero) {
+    private final Tablero tablero;
+    private final Queue<Integer> bufferEstados; // Buffer para almacenar estados recibidos de vecinos
+    private final int capacidadBuffer; // Capacidad máxima del buffer, basada en la fila
+
+    public Celda(Tablero tablero, int fila) {
         this.tablero = tablero;
-        this.estadoActual = Math.random() < 0.5 ? 1 : 0; .
+        this.estadoActual = Math.random() < 0.5 ? 1 : 0;
+        this.capacidadBuffer = fila + 1;
+        this.bufferEstados = new LinkedList<>();
     }
 
-    public void agregarVecino(Celda vecino) {
-        synchronized (vecinos) {
-            vecinos.add(vecino);
-        }
+    public synchronized void agregarVecino(Celda vecino) {
+        vecinos.add(vecino);
     }
 
     public int getEstadoActual() {
         return estadoActual;
     }
 
-    private void calcularProximoEstado() {
-        int vivos = (int) vecinos.stream().filter(v -> v.getEstadoActual() == 1).count(); // Cuenta la cantidad de vecinos vivos, es una line algo rara de codigo
-        estadoActual = (estadoActual == 1 && (vivos == 2 || vivos == 3)) || (estadoActual == 0 && vivos == 3) ? 1 : 0;
+    public synchronized void recibirEstadoDeVecino(int estado) {
+        while (bufferEstados.size() >= capacidadBuffer) {
+            try {
+                wait(); // Espera si el buffer está lleno
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        bufferEstados.add(estado);
+        notifyAll(); // Notifica que se ha agregado un estado al buffer
     }
 
-    @Override
-    public void run() {
-        try {
-            
-            while (!Thread.interrupted()) {
-                Thread.sleep(100); 
-                calcularProximoEstado();
-                
-                // Aca falta hacer la sincronización con el controlador de turnos
-                tablero.notificarCeldaListo();
+    private synchronized int leerEstadoDelBuffer() {
+        while (bufferEstados.isEmpty()) {
+            try {
+                wait(); // Espera si el buffer está vacío
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         }
+        int estado = bufferEstados.poll();
+        notifyAll(); // Notifica que se ha leído un estado del buffer
+        return estado;
     }
+
+    private void notificarVecinos() {
+        vecinos.forEach(vecino -> vecino.recibirEstadoDeVecino(this.estadoActual));
+    }
+
+    private void calcularProximoEstado() {
+        int vivos = 0;
+        synchronized (this) {
+            while (!bufferEstados.isEmpty()) {
+                vivos += leerEstadoDelBuffer();
+            }
+        }
+        int nuevoEstado = (estadoActual == 1 && (vivos == 2 || vivos == 3)) || (estadoActual == 0 && vivos == 3) ? 1 : 0;
+        this.estadoActual = nuevoEstado;
+    }
+
+    
+    @Override
+public void run() {
+    try {
+        while (!Thread.interrupted()) {
+            Thread.sleep(100);
+            notificarVecinos();
+            calcularProximoEstado();
+            tablero.notificarCeldaListo(); // Ajustado para no pasar argumentos
+        }
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+    }
+}
+
 }
