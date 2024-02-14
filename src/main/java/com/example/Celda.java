@@ -11,12 +11,18 @@ public class Celda extends Thread {
     private final Tablero tablero;
     private final Queue<Integer> bufferEstados; // Buffer para almacenar estados recibidos de vecinos
     private final int capacidadBuffer; // Capacidad máxima del buffer, basada en la fila
+    private int vecinosRecorridos;
+    
+
+
 
     public Celda(Tablero tablero, int fila) {
         this.tablero = tablero;
         this.estadoActual = Math.random() < 0.5 ? 1 : 0; //aca genera un estado aleatorio 1 - 0 para inicializar una celda
         this.capacidadBuffer = fila + 1; // calcula la capacidad del buffer basado en la fila
         this.bufferEstados = new LinkedList<>();
+        this.vecinosRecorridos = 0;
+        
     }
 
     public synchronized void agregarVecino(Celda vecino) {
@@ -64,11 +70,13 @@ public class Celda extends Thread {
     
         // Asumiendo que `leerEstadoDelBuffer` devuelve correctamente los estados de los vecinos.
         synchronized (this) {
-            while (!bufferEstados.isEmpty()) {
+            while (!bufferEstados.isEmpty() && vecinos.size() > vecinosRecorridos){
                 int estadoVecino = leerEstadoDelBuffer(); // Este método debería hacer poll() del buffer
                 if(estadoVecino == 1) {
                     vivos++; // Solo incrementa si el vecino está vivo
                 }
+                vecinosRecorridos++;
+
             }
         }
     
@@ -97,5 +105,10 @@ public void run() {
         Thread.currentThread().interrupt();
     }
 }
+
+    public void resetVecinosRecorridos() {
+        // TODO Auto-generated method stub
+        vecinosRecorridos = 0;
+    }
 
 }

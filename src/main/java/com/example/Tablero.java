@@ -31,8 +31,15 @@ public class Tablero {
         if (celdasListasParaSiguienteTurno == filas * columnas) {
             
             celdasListasParaSiguienteTurno = 0;
+            // ahora necesito que cuando se cumpla que ya estan todas las celdas listas, la cantidad de vecinos recorridos en cada celda sea 0
+            for (int i = 0; i < filas; i++) {
+                for (int j = 0; j < columnas; j++) {
+                    celdas[i][j].resetVecinosRecorridos();
+                }
+            }
             // aca espera para que todas las celdas esten listas para el siguiente turno
             notifyAll(); 
+            imprimirTablero();
         }
     }
 
